@@ -18,9 +18,15 @@ A lightweight REST API built with **FastAPI** that lets you send and receive SMS
 # 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Set your modem port in main.py
-MODEM_PORT = "/dev/ttyUSB0"   # Linux
-# MODEM_PORT = "COM3"         # Windows
+# 2. Find your modem port
+#    Windows — run this to find your COM port:
+python -c "import serial.tools.list_ports; [print(p) for p in serial.tools.list_ports.comports()]"
+#    Linux:
+ls /dev/ttyUSB*
+
+# 3. Set your modem port in main.py
+MODEM_PORT = "COM4"           # Windows (use the port found above)
+# MODEM_PORT = "/dev/ttyUSB0" # Linux
 
 # 3. Run the server
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
@@ -33,6 +39,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ## 📖 API Endpoints
 
 ### `GET /` — Info
+
 Returns available endpoints.
 
 ---
@@ -40,6 +47,7 @@ Returns available endpoints.
 ### `POST /sms/send` — Send SMS
 
 **Request body:**
+
 ```json
 {
   "to": "+8801XXXXXXXXX",
@@ -48,6 +56,7 @@ Returns available endpoints.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -67,6 +76,7 @@ Optional query param: `?status=ALL` (default)
 Options: `ALL`, `REC UNREAD`, `REC READ`, `STO UNSENT`, `STO SENT`
 
 **Response:**
+
 ```json
 [
   {
@@ -96,6 +106,7 @@ DELETE /sms/0
 ```
 
 **Response:**
+
 ```json
 { "success": true, "deleted_index": 0 }
 ```
@@ -105,6 +116,7 @@ DELETE /sms/0
 ### `GET /modem/status` — Modem Info
 
 **Response:**
+
 ```json
 {
   "connected": true,
