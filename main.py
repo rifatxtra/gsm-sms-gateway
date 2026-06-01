@@ -93,13 +93,22 @@ class Modem:
     # ── SMS operations ──────────────────────────────────────────────────────────
     def send_sms(self, number: str, message: str) -> str:
         """Send an SMS. Returns modem response (includes message reference)."""
-        self._at(f'AT+CMGS="{number}"', delay=0.3)
-        self._ser.write(message.encode() + bytes([26]))  # Ctrl-Z
-        time.sleep(4)
-        resp = self._ser.read(self._ser.in_waiting or 1).decode(errors="replace")
+        self._at(f'AT+CMGS="{number}"', delay=1.0)   # wait for > prompt
+        self._ser.write(message.encode() + bytes([26]))  # Ctrl-Z sends it
+        # Wait up to 15s for +CMGS: or ERROR response
+        deadline = time.time() + 15
+        resp = ""
+        while time.time() < deadline:
+            time.sleep(0.5)
+            chunk = self._ser.read(self._ser.in_waiting or 1).decode(errors="replace")
+            resp += chunk
+            if "+CMGS:" in resp or "ERROR" in resp or "OK" in resp:
+                break
         log.debug(f"SMS send response: {resp!r}")
         if "ERROR" in resp:
             raise RuntimeError(f"Failed to send: {resp.strip()}")
+        if "+CMGS:" not in resp:
+            raise RuntimeError(f"No confirmation received: {resp.strip()!r}")
         return resp.strip()
 
     def list_messages(self, status: str = "ALL") -> list[dict]:
